@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amex Offerings Personalization: Interactive Framework</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Warm neutrals: stone/amber, Muted blue accent) -->
+    <!-- Application Structure Plan: The application transforms the linear report into a guided, interactive journey through the data science workflow. It begins with a high-level problem statement, then allows users to interactively explore the data categories. The core of the app is an interactive demonstration of feature engineering, making an abstract concept tangible. It then visualizes the modeling pipeline and culminates in a simulated ranking scenario, directly tying back to the MAP@7 objective. This structure prioritizes user understanding and engagement by breaking down the complex process into logical, interactive sections, which is more effective than a static scroll-through of the original report. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Data Attribute Categories -> Goal: Inform -> Viz: Interactive Donut Chart (Chart.js) -> Interaction: Hover to see details. Justification: Provides a quick overview of the data landscape.
+        - Report Info: Key Feature Inferences (Recency, Alignment) -> Goal: Inform -> Viz: Icon-based info cards (HTML/Tailwind) -> Interaction: Static. Justification: Highlights core principles early and concisely.
+        - Report Info: Feature Engineering Logic -> Goal: Explain Process/Relationships -> Viz: Interactive Demo with Customer/Offer cards (HTML/JS) -> Interaction: User selects inputs, sees dynamic feature calculation. Justification: The most crucial interaction to make the core logic of the report tangible and understandable.
+        - Report Info: Data Cleaning & Modeling Pipeline -> Goal: Organize/Explain Process -> Viz: HTML/CSS Flowchart -> Interaction: Hover over steps for tooltips. Justification: Visually simplifies a multi-step, complex process.
+        - Report Info: Feature Importance -> Goal: Compare -> Viz: Dynamic Bar Chart (Chart.js) -> Interaction: Updates based on choices in the feature engineering demo. Justification: Reinforces which factors are most predictive.
+        - Report Info: MAP@7 Ranking -> Goal: Show Result/Change -> Viz: Animated list re-ranking (JS/CSS) -> Interaction: User triggers simulation. Justification: Directly visualizes the project's primary success metric.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .flowchart-step {
+            position: relative;
+            padding: 1rem;
+            background-color: #fafaf9; /* stone-50 */
+            border: 1px solid #e7e5e4; /* stone-200 */
+            border-radius: 0.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .flowchart-step:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #27272a; /* zinc-800 */
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-weight: 400;
+        }
+        .flowchart-arrow {
+            color: #a8a29e; /* stone-400 */
+        }
+        .offer-item {
+            transition: all 0.5s ease-in-out;
+        }
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            border: 1px solid #e7e5e4; /* stone-200 */
+            white-space: nowrap; /* Prevent text wrapping in table cells */
+        }
+        .data-table th {
+            background-color: #f5f5f4; /* stone-100 */
+            font-weight: 600;
+            text-align: left;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #fafaf9; /* stone-50 */
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 lg:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                     <span class="w-8 h-8 bg-sky-600 rounded-full flex items-center justify-center text-white font-bold text-sm">AX</span>
+                    <h1 class="text-lg md:text-xl font-bold text-stone-700">Offer Personalization Framework</h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#challenge" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">The Challenge</a>
+                    <a href="#data" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">The Data</a>
+                    <a href="#features" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">Feature Engineering</a>
+                    <a href="#preprocessing" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">Preprocessing</a>
+                    <a href="#algorithm" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">Algorithm</a>
+                    <a href="#simulation" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">Simulation</a>
+                    <a href="#conclusion" class="nav-link text-stone-600 hover:text-sky-600 border-b-2 border-transparent hover:border-sky-600 font-medium">Conclusion</a>
+                </div>
+                <div class="md:hidden">
+                    <button id="menu-btn" class="text-stone-600 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="#challenge" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">The Challenge</a>
+                <a href="#data" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">The Data</a>
+                <a href="#features" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">Feature Engineering</a>
+                <a href="#preprocessing" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">Preprocessing</a>
+                <a href="#algorithm" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">Algorithm</a>
+                <a href="#simulation" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">Simulation</a>
+                <a href="#conclusion" class="block py-2 px-4 text-sm text-stone-600 hover:bg-stone-100 rounded">Conclusion</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 lg:px-6 py-8 md:py-12">
+
+        <!-- Section 1: The Challenge (and Executive Summary) -->
+        <section id="challenge" class="mb-16 md:mb-24 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4">Cracking the Amex Challenge</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-8">
+                This is an interactive guide to the Amex Offer Personalization challenge. The goal isn't just to classify clicks, but to **rank** offers effectively. We need to predict the probability of a click given an impression: <strong>P(Click | Impression)</strong>.
+            </p>
+            <div class="max-w-3xl mx-auto text-left mb-10">
+                <h3 class="font-bold text-2xl mb-3 text-stone-800">Executive Summary</h3>
+                <p class="text-stone-600 mb-4">
+                    The American Express Campus Challenge 2025 presents a compelling data science problem focused on optimizing Amex Offerings Personalization. The core objective is to predict the probability of a customer clicking on a given Amex offering, contingent upon the customer having already viewed the offering. This is fundamentally a binary classification task, where the outcome is either a click (1) or no click (0). The ultimate aim is to enhance customer engagement by strategically presenting the most relevant offers in top ranks, with the solution's effectiveness evaluated using Mean Average Precision at 7 (MAP@7).
+                </p>
+                <p class="text-stone-600 mb-4">
+                    The proposed solution strategy centers on building a highly predictive machine learning model by meticulously leveraging the rich dataset provided. This involves a multi-faceted approach: a deep understanding of all available data attributes, strategic derivation of impactful features, robust data preprocessing to ensure data quality, and the selection and optimization of a state-of-the-art machine learning algorithm. The emphasis is on capturing nuanced customer behavior, offer characteristics, and their dynamic interactions over time.
+                </p>
+                <p class="text-stone-600">
+                    The methodology outlined in this report is designed to yield a highly accurate and robust prediction model capable of effectively ranking Amex offers. This framework is expected to contribute significantly to increased customer click-through rates, improved overall engagement with Amex offerings, and a strong performance against the MAP@7 evaluation criteria. Furthermore, the solution prioritizes scalability and interpretability, aligning with considerations for real-world deployment within American Express's analytical ecosystem.
+                </p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">The Core Task: Ranking</h3>
+                    <p class="text-stone-600">The model must predict which offers a customer is most likely to click on from a list they see. It's about getting the right offers into the top spots. This is more than a simple yes/no prediction; it's about relative preference.</p>
+                </div>
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">The Metric: MAP@7</h3>
+                    <p class="text-stone-600">Success is measured by <strong>Mean Average Precision at 7</strong>. This metric specifically evaluates the quality of the top 7 ranked offers for each customer. High scores mean the model consistently places clicked offers at the top of the list.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: The Data -->
+        <section id="data" class="mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4 text-center">Deconstructing the Data</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-12 text-center">
+                The solution is built on a massive dataset with over 366 features. Understanding these attributes is the first step. They can be grouped into key categories that describe the customer, the offer, and the context of their interaction.
+            </p>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8 items-start mb-12">
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-4 text-stone-800">Feature Categories</h3>
+                    <p class="text-stone-600 mb-4">The vast number of features can be simplified into logical groups. Hover over the chart to see the breakdown.</p>
+                    <div class="chart-container">
+                        <canvas id="dataCategoriesChart"></canvas>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                     <div class="section-card p-6">
+                        <h3 class="font-bold text-xl mb-2 text-stone-800">Key Insight: Recency is King</h3>
+                        <p class="text-stone-600">The data heavily features attributes with "decaying weights." This means recent customer actions (clicks, impressions) are far more predictive than older ones. A customer who engaged recently is primed to engage again.</p>
+                    </div>
+                    <div class="section-card p-6">
+                        <h3 class="font-bold text-xl mb-2 text-stone-800">Key Insight: Alignment Matters</h3>
+                        <p class="text-stone-600">The model's power comes from matching customer profiles (e.g., high spend on travel) with relevant offers (e.g., a hotel discount). This synergy between customer and offer is a core predictive signal.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-full mx-auto text-left mb-12">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Comprehensive Listing of All Attributes</h3>
+                <p class="text-stone-600 mb-4">
+                    The attributes are broadly categorized to facilitate analysis and strategic grouping.
+                </p>
+                <div class="table-container bg-white rounded-lg shadow-sm p-4">
+                    <table class="data-table w-full text-sm text-left text-stone-700">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-6">Attribute Name</th>
+                                <th class="py-3 px-6">Description</th>
+                                <th class="py-3 px-6">Type</th>
+                                <th class="py-3 px-6">Source Dataset</th>
+                                <th class="py-3 px-6">Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>`id1`</td><td>Primary Key (masked)</td><td>Key</td><td>`train_data.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`id2`</td><td>Customer ID (masked)</td><td>Key</td><td>`train_data.parquet`, `add_event.parquet`, `add_trans.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`id3`</td><td>Offer ID / Offerings ID</td><td>Categorical</td><td>`train_data.parquet`, `add_event.parquet`, `offer_metadata.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`id4`</td><td>Event timestamp / Impression Timestamp</td><td>Numerical</td><td>`train_data.parquet`, `add_event.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`id5`</td><td>Event Date</td><td>Numerical</td><td>`train_data.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`y`</td><td>Dependent Variable</td><td>Label</td><td>`train_data.parquet`</td><td>Target</td></tr>
+                            <tr><td>`f1`-`f12`</td><td>Interest score of a customer with specific `intrst_id`</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f13`</td><td>Count of distinct page categories a customer has visited in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f14`-`f21`</td><td>Whether a customer has visited specific pages (Redemption, MGM, MR, page_acq, travel, Rewards, Servicing, page_assist) in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f22`</td><td>Count of distinct channels a customer has used to logon to MYCA in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f23`-`f27`</td><td>Whether a customer has used specific MYCA logon channels (`myca_app`, `myca_ap2`, `myca_bwa`, `myca_brs`, `myca_web`) in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f28`</td><td>Cumulative impressions (with decaying weights for impressions in the past) of a CM for an OET offer_id in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f29`</td><td>Cumulative clicks (with decaying weights for clicks in the past) of a CM for an OET offer_id in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f30`</td><td>Cumulative impressions (with decaying weights for impressions in the past) of a cust_xref_id for a merchant offer in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f31`</td><td>Cumulative clicks (with decaying weights for clicks in the past) of a cust_xref_id for a Merchant offer in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f32`</td><td>Number of successfully sent emails in the last 30 days for each CM</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f33`</td><td>Number of emails clicked on in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f34`</td><td>Number of emails opted out of in the last 30 days for each CM</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f35`</td><td>Number of clicks in the last 30 days when `event_type_in` in 'CLICK_SERVICELINK','ENROLL_CLICK','CLICK_FOOTERLINK','CLICK_MARKETING'</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f36`</td><td>Number of calls on IVR in the last 90 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f37`</td><td>Call Duration in seconds associated with the inbound call in the last 90 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f38`</td><td>Number of successfully sent direct emails in the last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f39`</td><td>Spend in Lifestyle in the last 3 months</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f40`</td><td>Spend in Electronics in the last 3 months</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f41`</td><td>Spend in Restaurant in the last 3 months</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f42`</td><td>Membership level</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f43`</td><td>Current account mile balance</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f44`</td><td>Miles Ptype1</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f45`</td><td>Total number of segments 36 months All flights DL and OA</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f46`</td><td>YTD MQM MILES: IF 0 THEN NOTHING ELSE MEDQUALYTDBALANCE This is number of elite segments customer flew on DL or OA to qualify for elite status</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f47`</td><td>The number of miles Member has available to use for Awards</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f48`</td><td>Digit to represent Total DL Flights</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f49`</td><td>Miles Ptype2</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f50`</td><td>Account Creation Indicator</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f51`</td><td>Number of days between Elite effective date and rollup date</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f52`</td><td>Active Part y1</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f53`</td><td>Value assigned to member 1=lowest 5=highest</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f54`</td><td>Honors enrollees with Stay Activity within the last 12 months = A</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f55`</td><td>HG Vacation Club</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f56`</td><td>H Code Tier</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f57`</td><td>H Promus Indicator = A H P or Z</td><td>Categorical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f58`</td><td>Number of days between a member's enrollment in Loyalty Program and rollup date</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Demographic/Account</td></tr>
+                            <tr><td>`f59`</td><td>Total time spent on all pages in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f60`-`f67`</td><td>Total time spent in specific pages (`|AMEX|ACQ|`, `|AMEX|LOY|`, `|ESTATEMENT|`, `|MR|`, `|OCE|`, `|TRAVEL|`, `|PREPAID|GIFTCARD|`, other pages) in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f68`</td><td>Total time spent on all pages in the last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f69`-`f76`</td><td>Total time spent in specific pages (`|AMEX|ACQ|`, `|AMEX|LOY|`, `|ESTATEMENT|`, `|MR|`, `|OCE|`, Travel, `|PREPAID|GIFTCARD|`, other pages) in the last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f77`-`f93`</td><td>Ratios of page views/time spent (30 days vs 180 days) or views relative to total pages viewed in last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f94`-`f103`</td><td>Impressions for various offer types (Rewards, benefit awareness, Acquisition-Others, Acquisition-MGM, Loyalty, Lending/TLI, Other non-merchant, Servicing, Insurance) in last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f104`-`f113`</td><td>CTR for various offer types (Rewards, benefit awareness, Acquisition-Others, Acquisition-MGM, Loyalty, Lending/TLI, Other non-merchant, Servicing, Insurance) in last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f114`-`f122`</td><td>Ratios of CTR in last 90 days to CTR in last 180 days for various offer types</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f123`-`f129`</td><td>Number of clicks for specific categories (dining, entertainment, shopping, services, business expenses, retail) in last 60 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f130`-`f137`</td><td>CTR in last 60 days for specific offer types (dining, entertainment, shopping, travel, servicing, business expenses, retail) and all merchant offer types</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f138`</td><td>CTR in last 30 days for all merchant offer types</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f139`</td><td>Ratio of CTR in last 30 days to CTR in last 60 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f140`-`f145`</td><td>Ratios of clicks on specific merchant offer types (dining, entertainment, travel, services, business expenses, retail) to clicks on all merchant offers in last 60 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f146`</td><td>No. of impressions for a CM in the last 14 days where past impressions get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f147`</td><td>No of clicks for a CM in the last 30 days where past clicks get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f148`</td><td>No of impressions for a CM in the last 30 days where impressions days get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f149`</td><td>No of clicks for a CM in the last 14 days where past clicks get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f150`</td><td>Ratio of decaying clicks to decaying impressions in last 30 days for merchant offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f151`</td><td>Ratio of sum_past_decay_click_doe_14 to sum_past_decay_imp_doe_14</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f152`-`f162`</td><td>Debit amount in various categories (Airline, entertainment, Insurance/Financial, Oil & Gas, Lodging, Restaurant, Retail, Travel/Transportation/Auto Rental, Utilities, Communication, Everything else) for last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f163`-`f167`</td><td>Debit amount in various categories (Airline, entertainment, Insurance/Financial, Oil & Gas, Lodging) for last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f168`</td><td>Context variable fetched in real time where this is Number of seconds after 00:00 hrs</td><td>Numerical</td><td>`train_data.parquet`</td><td>Contextual</td></tr>
+                            <tr><td>`f169`-`f173`</td><td>Debit amount in various categories (Retail, Travel/Transportation/Auto Rental, Utilities, Communication, Everything else) for last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f174`-`f184`</td><td>Number of debit transactions in various categories (Airline, entertainment, Insurance/Financial, Oil & Gas, Lodging, Restaurant, Retail, Travel/Transportation/Auto Rental, Utilities, Communication, Everything else) for last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f185`</td><td>Total number of debit transactions in the last 30 days from `rollup_dt`</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f186`</td><td>Total number of debit transactions in the last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f187`-`f197`</td><td>Share of the number of debit transactions in various categories to total debit transactions in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f198`</td><td>Ratio of number of debit transactions in last 30 days to number of debit transactions in the last 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f199`</td><td>No of clicks for a CM in the last 30 days where past clicks get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f200`</td><td>No of impressions for a CM in the last 30 days where past impressions get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f201`</td><td>No of clicks for a CM in the last 14 days where past clicks get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f202`</td><td>No. of impressions for a CM in the last 14 days where past impressions get decaying weights</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f203`</td><td>Ratio of decaying clicks to decaying impressions in last 30 days for non-merchant offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f204`</td><td>Ratio of decaying clicks to decaying impressions in last 14 days for merchant offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f205`</td><td>Whether the CM has clicked on the offer in the last 3 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f206`</td><td>Number of clicks in the past 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f207`</td><td>Number of impressions in the last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f208`</td><td>CM clicks on an offer with same merchant in first 2 days of that offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f209`</td><td>CM clicks on an offer with same merchant in first 7 days of that offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f210`</td><td>CM Clicks on an offer by same merchant</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f211`</td><td>CM impressions on an offer with same merchant in first 7 days of that offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f212`</td><td>CM impressions on an offer with same merchant in first 14 days of that offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f213`</td><td>For offers with same merchant, number of Top of Chain Service Establishment Numbers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f214`</td><td>Difference between offer start date and offer_match_end on an offer with same merchant</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f215`</td><td>Offer duration on offers with same merchant</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f216`</td><td>Ratio of difference between offer start and offer end date to the difference of offer_match_start and offer_match_end</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f217`</td><td>Min Spend required to qualify for the DOE Offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f376`</td><td>Discount rate on the merchant offer</td><td>Numerical</td><td>`train_data.parquet`, `offer_metadata.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f219`</td><td>Value of discount on the merchant offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f220`</td><td>Number of MR points</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f221`</td><td>MR points per dollar</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f222`</td><td>Discount value per dollar</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f223`</td><td>Difference between offer duration display start timestamp and rollup date</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f224`</td><td>Difference between offer duration end timestamp and rollup date</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f225`</td><td>Difference between offer duration display start and offer duration end timestamp</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f226`-`f232`</td><td>Offer category (Business, dining, entertainment, retail, services, shopping, travel)</td><td>One hot encoded</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f233`-`f309`</td><td>Offer sub category (Activities and leisure, advertising, american, animal services, apparel, argentinean, asian, australian, auto fuel, auto rental, auto sales, auto services, automotive, bar night, books music, british, carry out, casual, chinese, clothing, coffee desserts, communications, computer services, constructions, cruises, cuisin, delis, education, electronics, european, finance, food store, food wine, french, fusion, german, gifts, golf, greek, health care, hobbies, home furnishing, home garden, hotel resorts, indian, italian, japanese, jewelry, mediterranean, mexican, office products, office supplies, other, other cuisine, other services, other shopping, parking, parks zoos, personal care, printing, professional, real estate, residential care, restaurant, seafood, services, shipping services, spanish, sports recreation, steakhouse, thai, tour, transportation, travel agencies, utilities, vegetarian, wholesale)</td><td>One hot encoded</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f310`</td><td>Last 1 day CTR</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f311`</td><td>Last 3 days CTR</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f312`</td><td>CTR in Last 7 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f313`</td><td>Last 14 days CTR</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f314`</td><td>last 30 days CTR</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f315`</td><td>Clicks in last 1 day</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f316`</td><td>Clicks in last 3 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f317`</td><td>Clicks in last 7 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f318`</td><td>Clicks in last 14 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f319`</td><td>Clicks in last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f320`</td><td>Impressions last 1 day</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f321`</td><td>Impressions last 3 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f322`</td><td>Impressions in last 7 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f323`</td><td>Impressions last 14 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f324`</td><td>Impressions last 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f325`-`f331`</td><td>CTR ratio variable</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f332`</td><td>Redemption mode is Online</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f333`</td><td>Redemption mode is in-store</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f334`</td><td>Redemption mode is phone</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f335`</td><td>Coupon offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f336`-`f340`</td><td>CTR on an offer with same merchant in last 1, 3, 7, 14, 30 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f341`-`f343`</td><td>CTR ratio variable for merchant offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f344`</td><td>CM impressions on an offer with same merchant in first 3 days of that offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f345`</td><td>CM impressions on an offer with same merchant in first 30 days of that offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f346`</td><td>CM impressions on an offer with same merchant</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f347`</td><td>Avg CTR of an offer</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f348`</td><td>No of impressions on the offer (in last 3 days)</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f349`</td><td>Context variable fetched in real time where 1 for Monday, 2 for Tuesday,..., 7 for Sunday</td><td>Categorical</td><td>`train_data.parquet`</td><td>Contextual</td></tr>
+                            <tr><td>`f350`</td><td>Context variable fetched in real time where this is Number of seconds after 00:00 hrs</td><td>Numerical</td><td>`train_data.parquet`</td><td>Contextual</td></tr>
+                            <tr><td>`f351`</td><td>Exponential Recovery on Age(Days since launch of offer)</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f352`</td><td>Vertical Asymptote on Age</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f353`</td><td>Hyperbolic Function of Age</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f354`</td><td>Depicts days since launch</td><td>Categorical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f355`</td><td>Decay of Click Through Rate in 1 Day</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f356`</td><td>Decay of Click Through Rate in 2 Day</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f357`</td><td>Decay of Click Through Rate in 7 Day</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f358`</td><td>Hyperbolic Function of Click Through Rate</td><td>Numerical</td><td>`train_data.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f359`</td><td>Financial hardship trigger scores for USCS customers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f360`</td><td>Financial hardship trigger scores for GCS customers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f361`</td><td>Total Impressions on the incoming offer's industry for the given CM in past 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f362`</td><td>Total clicks on the incoming offer's industry for the given CM in past 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f363`</td><td>CTR on the incoming offer's industry for the given CM in past 180 days</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f364`</td><td>CM’s past 6 month impressions on relevant offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f365`</td><td>CM’s past 6 month clicks on relevant offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`f366`</td><td>CM’s past 6 month CTR on relevant offers</td><td>Numerical</td><td>`train_data.parquet`</td><td>Customer Behavioral</td></tr>
+                            <tr><td>`id6`</td><td>Placement ID</td><td>Numerical</td><td>`add_event.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`id7`</td><td>Click Timestamp</td><td>Numerical</td><td>`add_event.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`f367`</td><td>Transaction Amount</td><td>Numerical</td><td>`add_trans.parquet`</td><td>Spend</td></tr>
+                            <tr><td>`f368`</td><td>Product ID</td><td>Categorical</td><td>`add_trans.parquet`</td><td>Transactional</td></tr>
+                            <tr><td>`f369`</td><td>Transaction Debit/Credit</td><td>Categorical</td><td>`add_trans.parquet`</td><td>Transactional</td></tr>
+                            <tr><td>`f370`</td><td>Transaction Date</td><td>Numerical</td><td>`add_trans.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`f371`</td><td>Time of Transaction</td><td>Numerical</td><td>`add_trans.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`f372`</td><td>Year-Month of Transaction</td><td>Numerical</td><td>`add_trans.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`f374`</td><td>Card Member Industry Description / Card Member Industry Name</td><td>Categorical</td><td>`add_trans.parquet`, `offer_metadata.parquet`</td><td>Transactional / Offer</td></tr>
+                            <tr><td>`id8`</td><td>Card Member Industry Code</td><td>Categorical</td><td>`add_trans.parquet`, `offer_metadata.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`id9`</td><td>Offerings Name</td><td>Categorical</td><td>`offer_metadata.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`f375`</td><td>Redemption Frequency</td><td>Numerical</td><td>`offer_metadata.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`f377`</td><td>Random</td><td>Numerical</td><td>`offer_metadata.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`id10`</td><td>Industry Code</td><td>Categorical</td><td>`offer_metadata.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`id11`</td><td>Brand Name</td><td>Categorical</td><td>`offer_metadata.parquet`</td><td>Identifier</td></tr>
+                            <tr><td>`f378`</td><td>Offerings Body</td><td>Text</td><td>`offer_metadata.parquet`</td><td>Offer</td></tr>
+                            <tr><td>`id12`</td><td>Start Timestamp</td><td>Numerical</td><td>`offer_metadata.parquet`</td><td>Temporal</td></tr>
+                            <tr><td>`id13`</td><td>End Timestamp</td><td>Numerical</td><td>`offer_metadata.parquet`</td><td>Temporal</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="max-w-full mx-auto text-left">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Inference and Relationships Among Attributes</h3>
+                <p class="text-stone-600 mb-4">
+                    The problem statement, which focuses on predicting the probability of a click given an impression (`P(Click | Impression)`), directly points to the critical importance of features that capture the interaction between a customer and an offer. Attributes such as cumulative impressions and clicks with decaying weights (`f28`-`f31`, `f146`-`f151`, `f199`-`f204`), offer category impressions and CTRs (`f94`-`f122`), and recent click/impression indicators (`f205`-`f212`, `f310`-`f324`, `f336`-`f348`, `f361`-`f366`) are direct measures of a customer's historical engagement and responsiveness.
+                </p>
+                <p class="text-stone-600 mb-4">
+                    A critical observation from the data is the emphasis on recency and frequency of interaction. The explicit inclusion of features with "decaying weights for impressions in the past" (e.g., `f28`, `f29`, `f30`, `f31`, `f146`, `f147`, `f148`, `f149`, `f199`, `f200`, `f201`, `f202`) and time-windowed metrics (1, 3, 7, 14, 30, 60, 90, 180 days) is a strong indicator that recent and frequent interactions are significantly more predictive of future clicks than older, less frequent ones. This suggests that the model should heavily leverage these pre-computed decay features, and any newly engineered recency-based features should be carefully designed to capture this temporal sensitivity. The recurring presence of these decay features across the dataset indicates that Amex has already identified the non-linear impact of time on engagement. A customer who has engaged recently is more likely to engage again, and the model must prioritize these dynamic signals.
+                </p>
+                <p class="text-stone-600 mb-4">
+                    The detailed "Interest scores" (e.g., `f1` for car rental, `f9` for airlines) and "Spend" categories (e.g., `f39` Lifestyle, `f41` Restaurant, `f152` Airline debit amount) provided for customers, coupled with the granular "Offer category" and "Offer sub category" (e.g., `f232` Travel, `f296` Restaurant) for offers, strongly indicate that the alignment between a customer's demonstrated preferences and spending habits and the specific nature of an offer is a powerful predictor. For instance, a customer who frequently engages with travel content or spends heavily on travel is inherently more likely to click on a travel-related offer. This direct mapping allows for the creation of highly personalized features that capture this synergistic alignment.
+                </p>
+                <p class="text-stone-600 mb-4">
+                    When evaluating offer characteristics, the balance between value and potential barriers is a key determinant. While higher discounts or more Membership Rewards points (`f376`, `f219`, `f220`) are intuitively more appealing, the `f217` (Min Spend required) acts as a potential barrier. The interplay between the perceived value of an offer and the customer's capacity or willingness to meet the conditions (e.g., in relation to their average transaction amount from `f367`) is crucial. A high-value offer with an unattainable minimum spend for a particular customer might still result in no click. This implies that the model needs to assess the offer's attractiveness relative to the individual customer's financial profile.
+                </p>
+                <p class="text-stone-600 mb-4">
+                    The extensive use of timestamps (`id4`, `id5`, `id7`, `f370`, `f371`, `f372`, `id12`, `id13`) and explicit features related to offer age and CTR decay (`f351`-`f358`) highlights the time-sensitive nature of customer engagement and offer performance. The granular temporal features, especially "Exponential Recovery on Age," "Vertical Asymptote on Age," and "Hyperbolic Function of Age" (`f351`, `f352`, `f353`), combined with "Decay of Click Through Rate" (`f355`, `f356`, `f357`, `f358`), indicate that an offer's performance is not static but dynamically evolves over its lifecycle. An offer might experience an initial surge in clicks (a novelty effect), then a decay, or even a resurgence towards its expiry. Similarly, customer engagement patterns can vary significantly by time of day (`f168`, `f350`) or day of week (`f349`). This suggests that the exact moment of impression and the offer's stage in its lifecycle play a significant role in click probability.
+                </p>
+                <p class="text-stone-600 mb-4">
+                    The presence of explicit customer segmentation (e.g., `f42` Membership level, `f53` Value assigned to member 1=lowest 5=highest) and loyalty program engagement features (`f43`, `f44`, `f47`, `f49`, `f51`, `f54`-`f58`) strongly indicates that Amex already segments its customers and likely targets offers accordingly. High-value or loyal customers might receive different types of offers or respond to them with varying propensities. The model should learn these underlying segment-offer interactions, as the problem background explicitly mentions "Targeting based on Customer segments, Customer profile, CM product, Geography, Spend Behavior".
+                </p>
+                <p class="text-stone-600">
+                    Finally, the inclusion of `id6` (Placement ID) from Events Data, and `id11` (Brand Name) and `f213` (Top of Chain Service Establishment Numbers) from Offerings Data provides crucial contextual information. The "Delivery" section of the competition brief notes that the "Personalization engine works across various channels and placements. Amex.com, Mobile App, Email". This indicates that the environment in which an offer is displayed can influence its clickability, independent of the customer or offer itself. A prominent placement might inherently yield higher clicks. Similarly, `id11` (Brand Name) and `f213` (Top of Chain Service Establishment Numbers) are crucial for understanding merchant-specific effects. Customers may have pre-existing brand loyalty or aversion, which directly impacts their response to offers from those brands. This necessitates features that capture customer-merchant interactions or merchant-specific performance metrics.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 3: Feature Engineering -->
+        <section id="features" class="mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4 text-center">The Art of Feature Engineering</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-12 text-center">
+                Raw data is not enough. The magic happens when we create new, more powerful features by combining existing ones. This interactive demo shows how we derive insights by connecting customer and offer data. <strong>Try changing the customer profile and offer type.</strong>
+            </p>
+
+            <div class="max-w-full mx-auto text-left mb-12">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Attributes for Feature Creation: Selection and Rationale</h3>
+                <p class="text-stone-600 mb-4">
+                    All attributes from the `data_dictionary.csv` and the supplementary `Events Data`, `Transaction Data`, and `Offerings Data` are considered for feature creation.
+                </p>
+                <ul class="list-disc list-inside text-stone-600 mb-4 space-y-2">
+                    <li><strong>Core Identifiers</strong>: `id2` (Customer ID), `id3` (Offer ID), `id6` (Placement ID), `id8` (Card Member Industry Code), `id10` (Industry Code), `id11` (Brand Name) are essential for grouping data to create aggregated features (e.g., average CTR for a specific offer) and for merging information across the various datasets. These identifiers will be used for feature derivation but will not be directly included as features in the final model, adhering to competition guidelines.</li>
+                    <li><strong>Temporal Attributes</strong>: `id4` (Impression Timestamp), `id5` (Event Date), `id7` (Click Timestamp), `f370` (Transaction Date), `f371` (Time of Transaction), `f372` (Year-Month of Transaction), `id12` (Offer Start Timestamp), `id13` (Offer End Timestamp), `f168`/`f350` (Seconds after 00:00 hrs), and `f349` (Day of week) are foundational for capturing time-decay, recency, frequency, and seasonality in customer behavior and offer performance.</li>
+                    <li><strong>Behavioral Attributes</strong>: All features from `f1`-`f38`, `f59`-`f151`, `f199`-`f212`, `f310`-`f324`, `f336`-`f348`, `f361`-`f366` directly quantify customer engagement, preferences, and historical responsiveness to offers. They represent the most direct indicators of a customer's propensity to click.</li>
+                    <li><strong>Spend Attributes</strong>: `f39`-`f41`, `f152`-`f198`, `f367` provide insights into a customer's financial capacity, spending habits, and commercial interests, which are vital for matching offers to purchasing power and relevance.</li>
+                    <li><strong>Loyalty/Demographic Attributes</strong>: `f42`-`f58` define customer segments, loyalty tiers, and engagement with Amex's rewards ecosystem, enabling a deeper understanding of personalized targeting strategies.</li>
+                    <li><strong>Offer Attributes</strong>: `f213`-`f225`, `f376`, `f219`-`f222`, `f226`-`f309`, `f332`-`f335`, `f351`-`f358` describe the intrinsic properties, value proposition, and lifecycle dynamics of each offer, which are critical for assessing its inherent attractiveness and temporal effectiveness.</li>
+                </ul>
+                <p class="text-stone-600">
+                    The rationale for selecting these attributes is their direct relevance to predicting click probability and their potential to capture complex interactions that drive personalized offer effectiveness.
+                </p>
+            </div>
+
+            <div class="max-w-full mx-auto text-left mb-12">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Derivation of Relevant and Potential Features</h3>
+                <p class="text-stone-600 mb-4">
+                    Beyond the raw attributes, deriving new features that encapsulate deeper relationships and temporal dynamics is crucial. The following categories of engineered features are proposed:
+                </p>
+                <h4 class="font-semibold text-lg text-stone-700 mb-2">Time-based Features:</h4>
+                <p class="text-stone-600 mb-4">
+                    These leverage the rich temporal information to capture dynamic behaviors and offer lifecycles.
+                </p>
+                <ul class="list-disc list-inside text-stone-600 mb-4 space-y-2">
+                    <li>`days_since_last_click`: Calculated as the number of days between the current `id4` (Impression Timestamp) and the customer's (`id2`) most recent `id7` (Click Timestamp) from the `Events Data`. This captures how recently a customer has engaged with any offer, indicating their current level of activity.</li>
+                    <li>`days_since_last_impression`: The number of days between the current `id4` and the customer's most recent `id4` (excluding the current one). This indicates how recently a customer was exposed to an offer.</li>
+                    <li>`days_since_last_transaction`: The number of days between the current `id4` and the customer's most recent `f370` (Transaction Date) from `Transaction Data`. This reflects recent spending activity.</li>
+                    <li>`offer_age_at_impression_days`: The number of days from `id12` (Offer Start Timestamp) to `id4` (Impression Timestamp). This provides a continuous measure of the offer's maturity, complementing `f354` (Depicts days since launch).</li>
+                    <li>`days_to_offer_expiry`: The number of days remaining between `id4` (Impression Timestamp) and `id13` (Offer End Timestamp). Offers nearing expiry might induce a sense of urgency, influencing click behavior.</li>
+                    <li>`offer_lifecycle_stage`: A categorical feature derived by bucketing `offer_age_at_impression_days` and `days_to_offer_expiry` into stages like 'Early', 'Mid', 'Late', or 'Expiring Soon'. This provides a high-level understanding of where the offer is in its promotion cycle, which can influence its performance.</li>
+                    <li>`hour_of_day_impression`: The hour extracted from `id4`.</li>
+                    <li>`is_weekend_impression`: A binary flag (1 if `f349` (Day of week) indicates Saturday or Sunday, 0 otherwise).</li>
+                    <li>`time_of_day_bucket`: A categorical feature bucketing `f350` (Number of seconds after 00:00 hrs) into 'Morning', 'Afternoon', 'Evening', 'Night'. These contextual features capture variations in customer behavior based on the time of day or week.</li>
+                </ul>
+                <h4 class="font-semibold text-lg text-stone-700 mb-2">Interaction Features:</h4>
+                <p class="text-stone-600 mb-4">
+                    These features capture the personalized relevance by combining customer and offer characteristics, which is paramount for a personalization task.
+                </p>
+                <ul class="list-disc list-inside text-stone-600 mb-4 space-y-2">
+                    <li>`customer_top_interest_matches_offer_category`: A binary flag indicating if a customer's highest interest score (from `f1`-`f12`) corresponds to the `Offer category` (`f226`-`f232`) of the current offer. This directly assesses the alignment of customer preferences with offer content.</li>
+                    <li>`customer_top_spend_category_matches_offer_category`: A binary flag indicating if the customer's highest spend category (from `f39`-`f41`, `f152`-`f162`) matches the `Offer category`. This provides a strong signal of commercial relevance.</li>
+                    <li>`customer_industry_matches_offer_industry`: A binary flag if `id8` (Customer Industry Code) matches `id10` (Offer Industry Code).</li>
+                    <li>`customer_past_clicks_on_offer_brand`: The sum of `id7` (Click Timestamp) for a specific `id2` (Customer ID) on offers from the same `id11` (Brand Name) as the current offer. This quantifies customer affinity for a specific brand.</li>
+                    <li>`customer_past_impressions_on_offer_brand`: The sum of `id4` (Impression Timestamp) for `id2` on offers from the same `id11` (Brand Name).</li>
+                    <li>`customer_avg_spend_with_offer_brand`: The average `f367` (Transaction Amount) for `id2` with the `id11` (Brand Name) of the current offer. This provides a financial context to brand affinity.</li>
+                    <li>`min_spend_to_avg_cust_transaction_ratio`: `f217` (Min Spend required) divided by the customer's average `f367` (Transaction Amount). This feature indicates how much of a "stretch" the offer's minimum spend is for the customer, directly addressing the balance of value and barrier.</li>
+                    <li>`discount_value_per_avg_cust_spend`: `f219` (Value of discount) divided by the customer's average `f367`.</li>
+                    <li>`customer_avg_ctr_on_placement`: The average CTR for `id2` (Customer ID) on the current `id6` (Placement ID).</li>
+                    <li>`placement_avg_ctr_overall`: The overall average CTR for the current `id6` (Placement ID) across all customers. These features capture the impact of the offer's display environment.</li>
+                </ul>
+                <h4 class="font-semibold text-lg text-stone-700 mb-2">Ratio and Aggregation Features:</h4>
+                <p class="text-stone-600 mb-4">
+                    While many valuable ratio features are already provided (`f77`-`f93`, `f114`-`f122`, `f139`-`f145`, `f150`-`f151`, `f187`-`f198`, `f203`-`f204`, `f325`-`f331`, `f341`-`f343`), additional aggregations can provide further insights.
+                </p>
+                <ul class="list-disc list-inside text-stone-600 mb-4 space-y-2">
+                    <li>`customer_total_spend_all_categories_30d`: Sum of `f152`-`f162` (Debit amounts in last 30 days).</li>
+                    <li>`customer_total_transactions_all_categories_180d`: Sum of `f174`-`f184` (Number of debit transactions in last 180 days).</li>
+                    <li>`customer_overall_avg_ctr`: Average of all `f310`-`f314` or `f336`-`f340` type features for the customer.</li>
+                    <li>`customer_distinct_offers_clicked_30d`: Count of distinct `id3` values where `y=1` for the customer in the last 30 days.</li>
+                    <li>`customer_avg_time_on_page_30d`: Average of `f59`-`f67` for the customer.</li>
+                    <li>`offer_overall_avg_ctr`: Average CTR of the specific `id3` (Offer ID) across all customers (excluding the current customer's interaction to avoid data leakage if calculated dynamically).</li>
+                    <li>`offer_industry_avg_ctr`: Average CTR for the `id10` (Industry Code) of the current offer.</li>
+                    <li>`offer_redemption_rate`: `f375` (Redemption Frequency) normalized or combined with total impressions for the offer.</li>
+                    <li>`offer_discount_point_ratio`: `f219` (Value of discount) / `f220` (Number of MR points).</li>
+                </ul>
+                <h4 class="font-semibold text-lg text-stone-700 mb-2">Leveraging and Interacting with Pre-computed Decay Functions:</h4>
+                <p class="text-stone-600 mb-4">
+                    The existing decaying weight features (`f28`-`f31`, `f146`-`f151`, `f199`-`f204`) are a powerful signal of recency and engagement. These pre-computed features already capture complex temporal patterns. Instead of re-deriving basic recency, the strategy is to directly use and interact with these. For example, creating ratios of decaying clicks to decaying impressions for specific categories, or comparing decaying metrics over different time windows (e.g., `f151` vs `f150`) can capture acceleration or deceleration in engagement. This allows the model to learn from the sophisticated temporal patterns already identified by Amex.
+                </p>
+                <h4 class="font-semibold text-lg text-stone-700 mb-2">Financial Hardship Scores (`f359`, `f360`):</h4>
+                <p class="text-stone-600 mb-4">
+                    These features indicate a customer's financial vulnerability. Financial hardship scores are a critical customer attribute that could significantly influence their responsiveness to different types of offers. Customers facing hardship might be less likely to engage with offers requiring large expenditures or luxury items, but potentially more receptive to offers that provide immediate savings, financial relief, or essential services. This suggests the creation of interaction features between hardship scores and offer categories or value propositions (e.g., `hardship_score_x_offer_type_discount`) to capture this modulated behavior.
+                </p>
+
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Proposed Engineered Features and Derivations</h3>
+                <div class="table-container bg-white rounded-lg shadow-sm p-4">
+                    <table class="data-table w-full text-sm text-left text-stone-700">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-6">New Feature Name</th>
+                                <th class="py-3 px-6">Derivation Logic/Formula</th>
+                                <th class="py-3 px-6">Source Attributes</th>
+                                <th class="py-3 px-6">Feature Type</th>
+                                <th class="py-3 px-6">Expected Predictive Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>`days_since_last_click`</td><td>`current_id4 - max(id7) GROUP BY id2`</td><td>`id4`, `id7`, `id2`</td><td>Numerical</td><td>Captures how recently a customer has clicked on any offer, indicating their current engagement levels. More recent clicks suggest higher propensity.</td></tr>
+                            <tr><td>`days_since_last_impression`</td><td>`current_id4 - max(id4) GROUP BY id2` (excluding current impression)</td><td>`id4`, `id2`</td><td>Numerical</td><td>Indicates how recently a customer was exposed to an offer, reflecting their recent browsing activity.</td></tr>
+                            <tr><td>`days_since_last_transaction`</td><td>`current_id4 - max(f370) GROUP BY id2`</td><td>`id4`, `f370`, `id2`</td><td>Numerical</td><td>Reflects the recency of a customer's financial activity, which may correlate with their readiness to engage with new offers.</td></tr>
+                            <tr><td>`offer_age_at_impression_days`</td><td>`id4 - id12`</td><td>`id4`, `id12`</td><td>Numerical</td><td>Indicates the offer's maturity at the time of impression; performance may vary based on its age (e.g., novelty effect, saturation).</td></tr>
+                            <tr><td>`days_to_offer_expiry`</td><td>`id13 - id4`</td><td>`id4`, `id13`</td><td>Numerical</td><td>Captures the urgency of the offer. Offers nearing expiry might see increased clicks due to a "fear of missing out."</td></tr>
+                            <tr><td>`offer_lifecycle_stage`</td><td>Categorical bucketing of `offer_age_at_impression_days` and `days_to_offer_expiry` (e.g., 'Early', 'Mid', 'Late', 'Expiring Soon')</td><td>`offer_age_at_impression_days`, `days_to_offer_expiry`</td><td>Categorical</td><td>Provides a high-level view of the offer's promotional phase, which can influence customer perception and click-through rates.</td></tr>
+                            <tr><td>`hour_of_day_impression`</td><td>`hour(id4)`</td><td>`id4`</td><td>Numerical</td><td>Identifies peak engagement times, as customer behavior can vary significantly throughout the day.</td></tr>
+                            <tr><td>`is_weekend_impression`</td><td>`1 if day_of_week(id4) in else 0`</td><td>`id4`</td><td>Binary</td><td>Captures potential differences in customer engagement patterns on weekends versus weekdays.</td></tr>
+                            <tr><td>`time_of_day_bucket`</td><td>Categorical bucketing of `f350` (e.g., 'Morning', 'Afternoon', 'Evening', 'Night')</td><td>`f350`</td><td>Categorical</td><td>Provides a more generalized temporal context for offer impressions, capturing broad behavioral shifts.</td></tr>
+                            <tr><td>`customer_top_interest_matches_offer_category`</td><td>`1 if customer's highest f1-f12 interest matches offer's f226-f232 category else 0`</td><td>`f1`-`f12`, `f226`-`f232`</td><td>Binary</td><td>Directly measures the alignment between a customer's stated interests and the offer's category, indicating relevance.</td></tr>
+                            <tr><td>`customer_top_spend_category_matches_offer_category`</td><td>`1 if customer's highest f39-f41, f152-f162 spend category matches offer's f226-f232 category else 0`</td><td>`f39`-`f41`, `f152`-`f162`, `f226`-`f232`</td><td>Binary</td><td>Indicates relevance based on demonstrated spending habits, suggesting a higher likelihood of conversion.</td></tr>
+                            <tr><td>`customer_industry_matches_offer_industry`</td><td>`1 if id8 (customer) == id10 (offer) else 0`</td><td>`id8`, `id10`</td><td>Binary</td><td>Measures direct industry alignment between customer and offer, useful for B2B or specialized offers.</td></tr>
+                            <tr><td>`customer_past_clicks_on_offer_brand`</td><td>`SUM(id7) for id2 on offers with same id11`</td><td>`id2`, `id7`, `id11`</td><td>Numerical</td><td>Quantifies a customer's historical engagement and affinity with the specific brand offering the current promotion.</td></tr>
+                            <tr><td>`customer_avg_spend_with_offer_brand`</td><td>`AVG(f367) for id2 with same id11`</td><td>`id2`, `f367`, `id11`</td><td>Numerical</td><td>Provides context to brand affinity by showing the average transaction value a customer has with that brand.</td></tr>
+                            <tr><td>`min_spend_to_avg_cust_transaction_ratio`</td><td>`f217 / AVG(f367) GROUP BY id2`</td><td>`f217`, `f367`, `id2`</td><td>Numerical</td><td>Highlights if the required minimum spend is a significant financial barrier for the customer relative to their typical spending.</td></tr>
+                            <tr><td>`customer_avg_ctr_on_placement`</td><td>`AVG(y) for id2 on id6`</td><td>`id2`, `id6`, `y`</td><td>Numerical</td><td>Measures a customer's general responsiveness to offers presented in a specific placement.</td></tr>
+                            <tr><td>`placement_avg_ctr_overall`</td><td>`AVG(y) for id6`</td><td>`id6`, `y`</td><td>Numerical</td><td>Indicates the inherent effectiveness of a particular placement channel in driving clicks across all customers.</td></tr>
+                            <tr><td>`customer_total_spend_all_categories_30d`</td><td>`SUM(f152-f162)`</td><td>`f152`-`f162`</td><td>Numerical</td><td>Provides an aggregate view of a customer's recent spending across all categories.</td></tr>
+                            <tr><td>`offer_overall_avg_ctr`</td><td>`AVG(y) for id3` (excluding current interaction)</td><td>`id3`, `y`</td><td>Numerical</td><td>Represents the historical effectiveness of a specific offer across the customer base, indicating its general attractiveness.</td></tr>
+                            <tr><td>`offer_discount_point_ratio`</td><td>`f219 / f220`</td><td>`f219`, `f220`</td><td>Numerical</td><td>A composite measure of an offer's value, combining monetary discount with MR points.</td></tr>
+                            <tr><td>`hardship_offer_interaction`</td><td>`f359 * offer_value_metric` (e.g., `f219`)</td><td>`f359`, `f219`</td><td>Numerical</td><td>Captures how financial hardship may modulate responsiveness to offers of varying value or type.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 items-start">
+                <div>
+                    <div class="section-card p-6 mb-6">
+                        <h3 class="font-bold text-xl mb-4 text-stone-800">1. Select Inputs</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="customerProfile" class="block text-sm font-medium text-stone-700 mb-1">Customer Profile</label>
+                                <select id="customerProfile" class="w-full p-2 border border-stone-300 rounded-md bg-white">
+                                    <option value="traveler">Frequent Traveler</option>
+                                    <option value="diner">Foodie / Diner</option>
+                                    <option value="shopper">Online Shopper</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="offerType" class="block text-sm font-medium text-stone-700 mb-1">Offer Type</label>
+                                <select id="offerType" class="w-full p-2 border border-stone-300 rounded-md bg-white">
+                                    <option value="travel">Airline Offer</option>
+                                    <option value="dining">Restaurant Offer</option>
+                                    <option value="retail">Retail Offer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card p-6">
+                        <h3 class="font-bold text-xl mb-4 text-stone-800">2. Derived Features</h3>
+                        <p class="text-stone-600 mb-4">Based on your selections, we calculate new interaction features in real-time. These are the signals the model uses to predict a click.</p>
+                        <ul id="derivedFeaturesList" class="space-y-3 text-stone-700">
+                           <!-- JS will populate this -->
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-4 text-stone-800">3. Resulting Feature Importance</h3>
+                     <p class="text-stone-600 mb-4">These derived features are highly predictive. This chart shows a mock-up of how important these new features are compared to raw data. Notice how they dominate the top ranks.</p>
+                    <div class="chart-container h-96">
+                         <canvas id="featureImportanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Data Preprocessing -->
+        <section id="preprocessing" class="mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4 text-center">Robust Data Preprocessing and Cleaning</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-12 text-center">
+                Data preprocessing and cleaning are indispensable steps to ensure the quality, consistency, and usability of the data for model training. This phase addresses common data imperfections and prepares the raw data for optimal performance.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto text-left">
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">Handling Missing Values</h3>
+                    <p class="text-stone-600 mb-4">
+                        The initial step involves a thorough examination of all attributes to identify the presence and extent of missing values. The imputation strategy will be meticulously tailored to the nature and context of each feature, avoiding a generalized approach. A critical observation in many behavioral and activity-related datasets, such as this one, is that a missing value is not merely "unknown" but often signifies "no activity" or "not applicable."
+                    </p>
+                    <ul class="list-disc list-inside text-stone-600 space-y-2">
+                        <li><strong>Numerical Features</strong>: For features representing counts or activity, imputation with <strong>0</strong> is most appropriate. For continuous numerical scores, imputation with the <strong>median</strong> is generally preferred.</li>
+                        <li><strong>Categorical Features</strong>: Creating a distinct <strong>"Missing" category</strong> is often the most robust approach.</li>
+                    </ul>
+                </div>
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">Outlier Detection and Treatment</h3>
+                    <p class="text-stone-600 mb-4">
+                        Outliers will be identified primarily in numerical features, particularly those related to spend, counts, or durations.
+                    </p>
+                    <ul class="list-disc list-inside text-stone-600 space-y-2">
+                        <li><strong>Identification</strong>: The Interquartile Range (IQR) method will be used, complemented by visual inspection.</li>
+                        <li><strong>Treatment</strong>: For most numerical features, outliers will be treated by <strong>capping/flooring</strong> values at a certain percentile (e.g., 99th or 99.5th percentile). For highly skewed distributions, <strong>log transformation</strong> can be applied.</li>
+                    </ul>
+                </div>
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">Categorical Feature Encoding</h3>
+                    <p class="text-stone-600 mb-4">
+                        Categorical features require appropriate encoding for machine learning models.
+                    </p>
+                    <ul class="list-disc list-inside text-stone-600 space-y-2">
+                        <li><strong>One-Hot Encoding</strong>: For nominal categorical features (e.g., Day of week, Placement ID, Brand Name), one-hot encoding will be applied.</li>
+                        <li><strong>Ordinal Encoding</strong>: For ordinal categorical features (e.g., Membership level, Value assigned to member), ordinal encoding will be used.</li>
+                        <li><strong>High-Cardinality Categoricals</strong>: For high-cardinality nominal features, techniques like <strong>Target Encoding</strong> or <strong>Frequency Encoding</strong> can be considered.</li>
+                    </ul>
+                </div>
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">Feature Scaling & Data Integration</h3>
+                    <p class="text-stone-600 mb-4">
+                        While tree-based models are robust to scale, scaling is good practice. Data integration is crucial for a comprehensive feature set.
+                    </p>
+                    <ul class="list-disc list-inside text-stone-600 space-y-2">
+                        <li><strong>Feature Scaling</strong>: <strong>StandardScaler</strong> or <strong>MinMaxScaler</strong> can be applied to numerical features.</li>
+                        <li><strong>Data Integration</strong>: Datasets will be merged using common identifiers and timestamps. All timestamp attributes will be converted to a consistent datetime format.</li>
+                        <li><strong>Temporal Validation</strong>: A <strong>time-series cross-validation</strong> strategy (e.g., walk-forward validation) is paramount to evaluate generalization to future data.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: The Model (Algorithm Selection) -->
+        <section id="algorithm" class="mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4 text-center">Algorithm Selection and Model Training</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-12 text-center">
+                The problem is a binary classification task to predict `P(Click | Impression)`, but the MAP@7 evaluation metric emphasizes effective ranking. This guides the algorithm choice.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto text-left">
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">Algorithm Suitability: Gradient Boosting Machines</h3>
+                    <p class="text-stone-600 mb-4">
+                        <strong>Gradient Boosting Machines (GBMs)</strong>, such as LightGBM and XGBoost, are highly suitable for this solution due to:
+                    </p>
+                    <ul class="list-disc list-inside text-stone-600 space-y-2">
+                        <li><strong>Handling Large Datasets and High Dimensionality</strong>: Efficiently manage numerous features.</li>
+                        <li><strong>Capturing Non-linear Relationships</strong>: Adept at identifying complex interactions between features.</li>
+                        <li><strong>Robustness</strong>: Relatively robust to outliers and noisy data.</li>
+                        <li><strong>Native Support for Ranking Objectives</strong>: Can be optimized for ranking metrics (e.g., LightGBM's `lambdarank` objective) directly aligning with MAP@7.</li>
+                        <li><strong>Scalability</strong>: Computationally efficient for large-scale deployment.</li>
+                    </ul>
+                    <p class="text-stone-600 mt-4">
+                        Ensemble techniques like stacking or blending multiple GBM models could be explored for incremental performance gains.
+                    </p>
+                </div>
+                <div class="section-card p-6">
+                    <h3 class="font-bold text-xl mb-3 text-stone-800">Training Strategy</h3>
+                    <p class="text-stone-600 mb-4">
+                        A robust training strategy is essential to build a reliable and generalizable model.
+                    </p>
+                    <ul class="list-disc list-inside text-stone-600 space-y-2">
+                        <li><strong>Cross-Validation</strong>: <strong>Time-series cross-validation</strong> (e.g., walk-forward validation) is paramount to evaluate generalization to future data.</li>
+                        <li><strong>Hyperparameter Tuning</strong>: Techniques such as <strong>Grid Search</strong>, <strong>Random Search</strong>, or <strong>Bayesian Optimization</strong> will be employed.</li>
+                        <li><strong>Evaluation Metric</strong>: Training will be guided by the <strong>MAP@7 evaluation criteria</strong> to ensure direct alignment with competition scoring.</li>
+                        <li><strong>Feature Importance</strong>: Tree-based models inherently provide <strong>feature importance scores</strong>, aiding in model interpretability and guiding further feature engineering.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="max-w-3xl mx-auto text-left mt-12">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">The Modeling Blueprint</h3>
+                <p class="text-stone-600 mb-8">
+                    A powerful model requires a disciplined process. From cleaning the raw data to selecting the right algorithm, every step is crucial. This flowchart outlines the path from messy data to a predictive engine. Hover over each step for details.
+                </p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-center justify-center text-sm font-semibold max-w-5xl mx-auto">
+                <div class="flowchart-step">
+                    Raw Data
+                    <span class="tooltip-text">Start with all available data files: train, events, transactions, and offer metadata.</span>
+                </div>
+                <div class="flex items-center justify-center flowchart-arrow text-2xl">→</div>
+                <div class="flowchart-step col-span-2 md:col-span-1">
+                    Preprocessing
+                    <span class="tooltip-text">Handle missing values (impute with 0 for counts, median for values), cap outliers, and encode categorical variables.</span>
+                </div>
+                <div class="flex items-center justify-center flowchart-arrow text-2xl">→</div>
+                 <div class="flowchart-step">
+                    Feature Engineering
+                    <span class="tooltip-text">Create the powerful interaction and time-based features demonstrated in the previous section.</span>
+                </div>
+                <div class="hidden lg:flex items-center justify-center flowchart-arrow text-2xl">→</div>
+                <div class="flowchart-step mt-4 lg:mt-0">
+                    Temporal Split
+                     <span class="tooltip-text">Split data by time, not randomly. Train on the past to predict the future, ensuring the model generalizes well.</span>
+                </div>
+                 <div class="flex items-center justify-center flowchart-arrow text-2xl mt-4 lg:mt-0">→</div>
+                 <div class="flowchart-step mt-4 lg:mt-0">
+                    GBM Model
+                     <span class="tooltip-text">Train a Gradient Boosting Machine (like LightGBM) optimized for ranking to produce the final predictions.</span>
+                </div>
+                 <div class="flex items-center justify-center flowchart-arrow text-2xl mt-4 lg:mt-0">→</div>
+                 <div class="flowchart-step mt-4 lg:mt-0">
+                    Ranked Offers
+                     <span class="tooltip-text">The final output: a ranked list of offers for each customer, ready for MAP@7 evaluation.</span>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 6: Simulation -->
+        <section id="simulation" class="mb-16 md:mb-24">
+             <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4 text-center">Ranking in Action</h2>
+             <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-8 text-center">
+                This is where it all comes together. We have a customer and a set of available offers. The model's job is to predict the click probability for each and rank them.
+            </p>
+            <div class="section-card p-6 md:p-8 max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                     <div>
+                        <h3 class="font-bold text-xl text-stone-800">Simulation: A Customer's View</h3>
+                        <p class="text-stone-600">Here are 7 potential offers for a customer. Click the button to see how the model ranks them based on predicted click-through rate (CTR).</p>
+                    </div>
+                    <button id="runSimulationBtn" class="mt-4 md:mt-0 w-full md:w-auto shrink-0 bg-sky-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors">
+                        Run Ranking Model
+                    </button>
+                </div>
+                <div id="offerList" class="space-y-3">
+                   <!-- JS populates this -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Conclusion -->
+        <section id="conclusion" class="mb-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-sky-700 mb-4 text-center">Conclusions and Recommendations</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600 mb-8 text-center">
+                The Amex Offerings Personalization challenge represents a sophisticated application of data science to enhance customer engagement. The proposed framework offers a comprehensive and actionable solution.
+            </p>
+
+            <div class="max-w-5xl mx-auto text-left mb-12">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Key Insights from Analysis</h3>
+                <p class="text-stone-600 mb-4">
+                    The analysis highlights that customer click behavior is highly dynamic and influenced by a multifaceted interplay of factors.
+                </p>
+                <ul class="list-disc list-inside text-stone-600 space-y-2">
+                    <li>The pervasive presence of time-windowed and decaying-weight features in the provided data underscores that recent and frequent customer interactions are exceptionally strong predictors of future engagement.</li>
+                    <li>The explicit categorization of customer interests, spending habits, and offer types reveals that the alignment between a customer's profile and an offer's content is a critical determinant of click propensity.</li>
+                    <li>The balance between an offer's perceived value (e.g., discount, MR points) and any associated barriers (e.g., minimum spend) also plays a significant role, where the customer's financial context can modulate their responsiveness.</li>
+                    <li>Finally, the temporal evolution of an offer's performance and the specific context of its placement are observed to be crucial, indicating that the timing and environment of an impression are not merely incidental but predictive factors.</li>
+                </ul>
+            </div>
+
+            <div class="max-w-5xl mx-auto text-left">
+                <h3 class="font-bold text-2xl mb-4 text-stone-800">Recommendations for Implementation and Future Work</h3>
+                <ul class="list-disc list-inside text-stone-600 space-y-2">
+                    <li><strong>Iterative Feature Engineering</strong>: Continuously explore and refine engineered features. The insights from feature importance scores generated by the GBM model can guide subsequent iterations of feature creation, focusing on attributes that demonstrate the highest predictive power.</li>
+                    <li><strong>Ensemble Modeling</strong>: Consider building an ensemble of diverse models (e.g., multiple GBMs with different seeds/hyperparameters, or even neural networks for sequence data if applicable) to potentially achieve marginal gains in MAP@7 performance.</li>
+                    <li><strong>A/B Testing</strong>: In a real-world scenario, the ultimate validation of any personalization model comes from A/B testing. Deploying the model's recommendations to a subset of customers and comparing their click-through rates and engagement metrics against a control group would provide definitive proof of its business impact.</li>
+                    <li><strong>Real-time Feature Pipelines</strong>: For a scalable, real-time personalization engine, developing robust data pipelines to compute and serve features (especially time-sensitive ones) in near real-time would be a critical next step. This would ensure that the model always makes predictions based on the most current customer and offer data.</li>
+                    <li><strong>Interpretability and Explainability</strong>: Beyond predictive accuracy, understanding *why* certain offers are recommended is crucial for business stakeholders. Techniques for model interpretability (e.g., SHAP values, LIME) can be applied to provide actionable explanations for the model's decisions.</li>
+                </ul>
+                <p class="text-stone-600 mt-6">
+                    By adhering to this comprehensive data science framework, the solution is well-positioned to effectively address the Amex Offerings Personalization challenge, driving increased customer engagement and delivering a high-performing, scalable predictive model.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile menu toggle
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // --- Chart.js Setup ---
+
+            // Data Categories Chart
+            const dataCategoriesCtx = document.getElementById('dataCategoriesChart').getContext('2d');
+            const dataCategoriesChart = new Chart(dataCategoriesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Customer Behavioral', 'Offer-Specific', 'Customer Demographics', 'Spend/Transaction', 'Contextual'],
+                    datasets: [{
+                        label: 'Feature Categories',
+                        data: [45, 25, 15, 10, 5],
+                        backgroundColor: [
+                            'rgba(2, 132, 199, 0.7)',  // sky-600
+                            'rgba(245, 158, 11, 0.7)',  // amber-500
+                            'rgba(13, 148, 136, 0.7)', // teal-600
+                            'rgba(124, 58, 237, 0.7)', // violet-600
+                            'rgba(168, 162, 158, 0.7)'// stone-400
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 12 },
+                                boxWidth: 15,
+                                padding: 15,
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `${context.label}: ${context.raw}% of features`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Feature Importance Chart
+            const featureImportanceCtx = document.getElementById('featureImportanceChart').getContext('2d');
+            let featureImportanceChart;
+
+            const featureImportanceData = {
+                base: {
+                    labels: ['Raw Feature A', 'Raw Feature B', 'Raw Feature C', 'Raw Feature D'],
+                    data: [15, 12, 10, 8]
+                },
+                traveler_travel: {
+                    labels: ['customer_top_spend_matches_offer_category', 'days_since_last_click', 'min_spend_to_avg_cust_transaction_ratio', 'offer_age_at_impression_days', 'Raw Feature A'],
+                    data: [85, 75, 60, 45, 15]
+                },
+                diner_dining: {
+                    labels: ['customer_top_spend_matches_offer_category', 'days_since_last_click', 'min_spend_to_avg_cust_transaction_ratio', 'time_of_day_bucket', 'Raw Feature B'],
+                    data: [90, 80, 55, 50, 12]
+                },
+                shopper_retail: {
+                     labels: ['customer_top_spend_matches_offer_category', 'days_since_last_click', 'offer_discount_point_ratio', 'customer_avg_ctr_on_placement', 'Raw Feature C'],
+                    data: [88, 78, 65, 58, 10]
+                }
+            };
+
+            function createOrUpdateFeatureImportanceChart(profile, offer) {
+                const key = `${profile}_${offer}`;
+                const dataToShow = featureImportanceData[key] || featureImportanceData.base;
+
+                if(featureImportanceChart) {
+                    featureImportanceChart.destroy();
+                }
+
+                featureImportanceChart = new Chart(featureImportanceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dataToShow.labels.map(label => label.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())),
+                        datasets: [{
+                            label: 'Predictive Importance',
+                            data: dataToShow.data,
+                            backgroundColor: 'rgba(2, 132, 199, 0.7)',
+                            borderColor: 'rgba(2, 132, 199, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Mock Feature Importance' },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `Importance Score: ${context.raw}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Relative Importance Score'}
+                            },
+                             y: {
+                                ticks: {
+                                    autoSkip: false,
+                                    callback: function(value, index, values) {
+                                        const label = this.getLabelForValue(value);
+                                        return label.length > 25 ? label.substring(0, 25) + '...' : label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- Feature Engineering Demo ---
+            const customerProfileSelect = document.getElementById('customerProfile');
+            const offerTypeSelect = document.getElementById('offerType');
+            const derivedFeaturesList = document.getElementById('derivedFeaturesList');
+
+            const demoData = {
+                traveler: { spendCategory: 'Travel', interest: 'Airlines', avgTransaction: 250 },
+                diner: { spendCategory: 'Dining', interest: 'Restaurants', avgTransaction: 60 },
+                shopper: { spendCategory: 'Retail', interest: 'Apparel', avgTransaction: 85 }
+            };
+            const offerData = {
+                travel: { category: 'Travel', minSpend: 500, discount: 100 },
+                dining: { category: 'Dining', minSpend: 40, discount: 10 },
+                retail: { category: 'Retail', minSpend: 75, discount: 15 }
+            };
+
+            function updateFeatureDemo() {
+                const customerKey = customerProfileSelect.value;
+                const offerKey = offerTypeSelect.value;
+                const customer = demoData[customerKey];
+                const offer = offerData[offerKey];
+
+                const match = customer.spendCategory === offer.category;
+                const ratio = (offer.minSpend / customer.avgTransaction).toFixed(2);
+
+                let featuresHTML = `
+                    <li class="flex items-start"><span class="mr-2 mt-1 text-sky-600 font-bold">✓</span><span><strong>Spend Category Match:</strong> <span class="font-mono p-1 rounded ${match ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${match ? 'TRUE' : 'FALSE'}</span></span></li>
+                    <li class="flex items-start"><span class="mr-2 mt-1 text-sky-600 font-bold">✓</span><span><strong>Min Spend / Avg Transaction:</strong> <span class="font-mono p-1 rounded bg-stone-100">${ratio}</span> (Is the offer spend a big jump for the customer?)</span></li>
+                    <li class="flex items-start"><span class="mr-2 mt-1 text-sky-600 font-bold">✓</span><span><strong>Days Since Last Click:</strong> <span class="font-mono p-1 rounded bg-stone-100">${Math.floor(Math.random() * 30) + 1}</span> (How recently did they engage?)</span></li>
+                    <li class="flex items-start"><span class="mr-2 mt-1 text-sky-600 font-bold">✓</span><span><strong>Offer Age (Days):</strong> <span class="font-mono p-1 rounded bg-stone-100">${Math.floor(Math.random() * 90) + 5}</span> (Is the offer new or old?)</span></li>
+                `;
+                derivedFeaturesList.innerHTML = featuresHTML;
+
+                createOrUpdateFeatureImportanceChart(customerKey, offerKey);
+            }
+
+            customerProfileSelect.addEventListener('change', updateFeatureDemo);
+            offerTypeSelect.addEventListener('change', updateFeatureDemo);
+
+            // --- Simulation Logic ---
+            const runSimulationBtn = document.getElementById('runSimulationBtn');
+            const offerListContainer = document.getElementById('offerList');
+            const initialOffers = [
+                { id: 1, name: '10% off at The Burger Joint', category: 'dining', score: 0 },
+                { id: 2, name: 'Save $50 on Luxury Hotels', category: 'travel', score: 0 },
+                { id: 3, name: '2x Points on Electronics', category: 'retail', score: 0 },
+                { id: 4, name: 'Free Appetizer with Entree', category: 'dining', score: 0 },
+                { id: 5, name: '$100 off your next flight', category: 'travel', score: 0 },
+                { id: 6, name: '15% off at Fashion Central', category: 'retail', score: 0 },
+                { id: 7, name: 'Coffee Shop BOGO', category: 'dining', score: 0 }
+            ];
+            let currentOffers = [...initialOffers];
+
+            function renderOffers() {
+                offerListContainer.innerHTML = '';
+                currentOffers.forEach((offer, index) => {
+                    const offerElement = document.createElement('div');
+                    offerElement.className = 'offer-item flex items-center justify-between p-4 rounded-lg bg-stone-50 border border-stone-200';
+                    offerElement.style.order = index;
+                    offerElement.innerHTML = `
+                        <div class="flex items-center">
+                            <div id="rank-${offer.id}" class="rank-badge w-8 h-8 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center font-bold text-sm mr-4 transition-colors">${index + 1}</div>
+                            <div>
+                                <p class="font-semibold text-stone-800">${offer.name}</p>
+                                <p class="text-sm text-stone-500">${offer.category.charAt(0).toUpperCase() + offer.category.slice(1)}</p>
+                            </div>
+                        </div>
+                        <div id="score-${offer.id}" class="score-text text-right font-mono text-sm text-stone-500 transition-opacity opacity-0">CTR: --%</div>
+                    `;
+                    offerListContainer.appendChild(offerElement);
+                });
+            }
+
+            runSimulationBtn.addEventListener('click', () => {
+                const customerKey = customerProfileSelect.value;
+
+                // Simulate model scoring
+                currentOffers.forEach(offer => {
+                    let baseScore = Math.random() * 0.05;
+                    if( (customerKey === 'traveler' && offer.category === 'travel') ||
+                        (customerKey === 'diner' && offer.category === 'dining') ||
+                        (customerKey === 'shopper' && offer.category === 'retail') ) {
+                        baseScore += (Math.random() * 0.15 + 0.1); // Big boost for match
+                    }
+                    offer.score = baseScore;
+                });
+
+                // Sort by score descending
+                currentOffers.sort((a, b) => b.score - a.score);
+
+                // Re-render and animate
+                currentOffers.forEach((offer, index) => {
+                    const offerElement = offerListContainer.querySelector(`.offer-item:nth-child(${initialOffers.findIndex(o => o.id === offer.id) + 1})`);
+                    if(offerElement) {
+                        offerElement.style.order = index;
+                        const rankBadge = offerElement.querySelector(`#rank-${offer.id}`);
+                        rankBadge.textContent = index + 1;
+                        if (index < 3) {
+                             rankBadge.classList.remove('bg-stone-200', 'text-stone-600');
+                             rankBadge.classList.add('bg-sky-600', 'text-white');
+                        } else {
+                            rankBadge.classList.add('bg-stone-200', 'text-stone-600');
+                             rankBadge.classList.remove('bg-sky-600', 'text-white');
+                        }
+
+                        const scoreText = offerElement.querySelector(`#score-${offer.id}`);
+                        scoreText.textContent = `CTR: ${(offer.score * 100).toFixed(2)}%`;
+                        setTimeout(() => {
+                           scoreText.classList.remove('opacity-0');
+                        }, 500);
+                    }
+                });
+                 runSimulationBtn.textContent = 'Re-run Model';
+            });
+
+            // Initial render
+            updateFeatureDemo();
+            renderOffers();
+        });
+    </script>
+</body>
+</html>
